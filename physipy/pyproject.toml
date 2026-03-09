@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "physipy"
 version = "0.1.0"
 description = "Computational physics numerical library"
-authors = [{name = "Claudio D'Emilio"}, {name = "Ettore [Cognome]"}]
+authors = [{name = "Claudio D'Emilio"}, {name = "Ettore Zangiacomi"}]
 readme = "README.md"
 requires-python = ">=3.9"
 
