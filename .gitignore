@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# Virtual environments
+.venv/
+env/
+
+# Packaging artifacts
+*.egg-info/
+build/
+dist/
+
+# Jupyter
+.ipynb_checkpoints/
