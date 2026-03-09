@@ -1,32 +1,41 @@
+# Physipy — General-Purpose Computational Physics Library
 
-# Computational Physics Projects
+Physipy is a **general-purpose Python library for computational physics**.
 
-This repository hosts templates and shared resources for computational physics projects, numerical experiments, and reproducible research.
+Its purpose is to provide a reusable and extensible collection of numerical tools, algorithms, and utilities for solving a wide range of physics problems. Rather than being tied to a single simulation or project, the repository is intended to serve as a **shared computational toolkit** for common tasks in theoretical and computational physics.
 
-## Purpose
+Typical use cases include:
 
-- Provide a consistent project layout and contribution workflow for physics simulations, numerical analysis, and data-driven experiments.
+- numerical integration of ordinary differential equations
+- bound-state problems in quantum mechanics
+- scattering calculations
+- WKB-based approximations
+- eigenvalue problems
+- exploratory numerical experiments in Jupyter notebooks
+
+The project is designed to be **modular, lightweight, and easy to extend** as new methods and problems are added.
+
+## Goals
+
+The main goals of this repository are:
+
+- provide a **general-purpose library** for computational physics problems
+- keep reusable numerical code separate from exploratory notebooks
+- make it easy to test, extend, and reuse algorithms across different projects
+- build a compact but flexible toolkit for simulations and numerical analysis
 
 ## Repository Structure
 
-Recommended layout for each project inside this repository:
-
-```
-projects/
-	└─ <project-name>/
-		 ├─ notebooks/        # Jupyter notebooks for exploration and demos
-		 ├─ src/              # Production-ready code and modules
-		 ├─ data/             # Raw and processed datasets (gitignored large files)
-		 ├─ results/          # Output figures, tables, and serialized results
-		 ├─ env/              # environment files: requirements.txt, environment.yml
-		 └─ README.md         # project-specific README with usage + citations
-docs/                    # higher-level documentation and tutorials
-LICENSE
-README.md
-```
-
-## Adding a New Project
-
-1. Create `projects/<project-name>` with the structure above.
-2. Add an environment spec: `requirements.txt` or `environment.yml`.
-3. Include a short `README.md` describing goals, run instructions, and references.
+```text
+physipy/
+├── src/
+│   └── physipy/
+│       ├── __init__.py
+│       ├── numerics.py
+│       ├── bound_states.py
+│       ├── potentials.py
+│       └── wkb.py
+├── notebooks/
+│   └── *.ipynb
+├── pyproject.toml
+└── README.md
