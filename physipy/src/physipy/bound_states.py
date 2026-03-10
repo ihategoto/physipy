@@ -1,7 +1,7 @@
 import numpy as np
 from physipy.potentials import *
 from physipy.numerics import _integrate_numerov, Grid, SolverOpts, Eigenstate
-from physipy.wkb import WKB_inward_seed
+from physipy.wkb import WKB_seed
 
 __all__ = [
     "bisection",
@@ -11,7 +11,7 @@ __all__ = [
 
 def _integrate_bound_state(E, l, potential, psi_0_outward, psi_1_outward, psi_0_inward, psi_1_inward, grid = Grid(), solver = SolverOpts(), **kwargs):
     """
-    Perform outward and inward Numerov integration of the radial Schrödinger equation for bound state and compute the 
+    Perform outward and inward Numerov integration of the radial Schrödinger equation for a bound state and compute the 
     Wronskian mismatch at the classical turning point.
 
     Parameters
@@ -44,23 +44,27 @@ def _integrate_bound_state(E, l, potential, psi_0_outward, psi_1_outward, psi_0_
 
     """
     # check whether it is possibile to perform inward intergration
-    if isin_classical_region(grid.r_max, E, potential, **kwargs):
-        # not good, r_max must be after the classical turning point
-        print("Error: the final point of the mesh is within the classical region, cannot perform inward integration.")
-        return (None, None, None)
+    if isin_classical_region(grid.r_max, E, l, potential, **kwargs):
+        # not good, r_max must be after the rightmost classical turning point
+        raise ValueError("The final point of the mesh is within a classical region, cannot perform inward integration.")
     
     # identify the matching point in the grid
-    f = isin_classical_region(np.arange(grid.r_min, grid.r_max, grid.h), E, potential, **kwargs)
-    i = 0
+    # note: that wwe take the matching point as the right-most classical turning point
+    f = isin_classical_region(np.arange(grid.r_min, grid.r_max, grid.h), E, l, potential, **kwargs)
+    i = len(f) - 1
 
     try:
-        while f[i + solver.match_buffer_steps]:
-            i += 1
+        while not f[i]:
+            i -= 1
     except IndexError:
-        print("Error: adjust buffer size.")
+        print("No classical region detected.")
         return (None, None, None)
     
-    r_match = grid.r_min + i * grid.h
+    # check whether the matching point is within the classical region, if not raise an exception
+    if not f[i - solver.match_buffer_steps]:
+        raise IndexError('Matching region in non-classical region, please adjust the buffer size.')
+    
+    r_match = grid.r_min + i * grid.h - solver.match_buffer_steps * grid.h
 
     # outward integration (classical region)
     outward_grid = Grid(grid.r_min, r_match, grid.h)
@@ -85,7 +89,7 @@ def _integrate_bound_state(E, l, potential, psi_0_outward, psi_1_outward, psi_0_
     duo = (uo0 - uo2) / (2*grid.h)
     dui = (ui2 - ui0) / (2*grid.h)
 
-    W = uo1*dui - ui1*duo
+    W = uo1 * dui - ui1 * duo
 
     # merge outward and inward solutions
     scale = uo1 / ui1
@@ -195,7 +199,7 @@ def energy_levels(E, l, potential, psi_0_outward , grid = Grid(), solver = Solve
     for _l in l:
         for _E in E:
             psi_1_outward = np.pow(psi_0_outward + h, _l + 1)
-            psi_1_inward = WKB_inward_seed(_E, _l, r_max, h, potential, **kwargs)
+            psi_1_inward = WKB_seed(_E, _l, r_max, h, potential, outward = False, **kwargs)
             __1, __2, error = _integrate_bound_state(_E, _l, potential, psi_0_outward, psi_1_outward, psi_0_inward, psi_1_inward, grid, solver, **kwargs)
             err_curr = error
             if err_prev is not None and E_prev is not None and np.sign(err_curr) != np.sign(err_prev):
