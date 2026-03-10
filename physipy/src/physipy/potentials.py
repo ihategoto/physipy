@@ -47,7 +47,7 @@ def lennard_jones(r, sigma = 1, epsilon = 1):
     E = 4 * epsilon * (np.pow(sigma/r, 12) - np.pow(sigma/r, 6))
     return E
 
-def isin_classical_region(r, E, potential, **kwargs):
+def isin_classical_region(r, E, l, potential, **kwargs):
     """
     Check whether the position is within the classical region for a given potential.
 
@@ -57,6 +57,8 @@ def isin_classical_region(r, E, potential, **kwargs):
         The position(s) to be evaluated.
     E : float
         Particle's energy.
+    l : int
+        Angular momentum quantum number.
     potential : callable
         Potential energy to be used.
     **kwargs : dict
@@ -68,8 +70,18 @@ def isin_classical_region(r, E, potential, **kwargs):
         True if r is in the classical region for the given potential, False otherwise.
     
     """
-    f = (E - potential(r, **kwargs)) > 0
+    if 'm' in kwargs:
+        m = kwargs['m']
+    else:
+        m = 1
+    
+    if (isinstance(r, np.ndarray) and np.any(r == 0)) or np.any(r == 0):
+        raise ValueError('Evaluating potential at the singular point 0.')
+    
+    v_eff = potential(r, **kwargs) + 0.5 * l * (l+1)/(m*r*r)
+    f = (E - v_eff) > 0
     return f
+
 
 def k(r, l, E, potential, **kwargs):
     """
@@ -93,11 +105,15 @@ def k(r, l, E, potential, **kwargs):
     k : float or None
 
     """
-    if r != 0:
-        centr_barrier = 0.5 * l * (l+1)/(r*r)
-        pot = potential(r, **kwargs)
-        k = 2 * (E - pot - centr_barrier)
+    if 'm' in kwargs:
+        m = kwargs['m']
     else:
-        k = 0
+        m = 1
+
+    if (isinstance(r, np.ndarray) and np.any(r == 0)) or np.any(r == 0):
+        raise ValueError('Evaluating potential at the singular point 0.')
     
+    centr_barrier = 0.5 * l * (l+1)/(m*r*r)
+    pot = potential(r, **kwargs)
+    k = 2 * (E - pot - centr_barrier)
     return k 
