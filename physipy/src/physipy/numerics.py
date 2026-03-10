@@ -13,9 +13,17 @@ class Grid:
     """
     Class containing the grid parameters.
     """
-    r_min: float = 0
+    r_min: float = 1e-4
     r_max: float = 10
     h: float = 1e-3
+
+    def __post_init__(self):
+        if self.r_min <= 0:
+            raise ValueError("Grid r_min must be positive")
+        if self.r_max <= self.r_min:
+            raise ValueError("Grid r_max must be larger than r_min")
+        if self.h <= 0:
+            raise ValueError("Step size h must be positive")
 
 @dataclass(frozen = True)
 class SolverOpts:
@@ -78,10 +86,10 @@ def _integrate_numerov(E, l, potential, psi_0, psi_1, grid = Grid(), solver = So
         Angular momentum quantum number.
     potential : callable
         Potential energy to be used.
-    psi_0_outward, psi_1_outward : float
-        Initial values for outward Numerov integration.
-    psi_0_inward, psi_1_inward : float
-        Initial values for inward Numerov integration (e.g. from WKB).
+    psi_0 : float
+        First seed value for Numerov integration.
+    psi_1 : float
+        Second seed value for Numerov integration.
     grid : class
         Mesh on which the integration is to be performed.
     solver : class
