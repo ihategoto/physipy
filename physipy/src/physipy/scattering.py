@@ -1,0 +1,158 @@
+import numpy as np
+import scipy as sp
+from physipy.potentials import *
+from physipy.wkb import WKB_seed
+from physipy.numerics import _integrate_numerov, Grid, SolverOpts, Eigenstate
+
+def _integrate_scattering_state(E, l, potential, wkb = False, grid = Grid(), solver = SolverOpts(), **kwargs):
+    """
+    Perform Numerov integration of the radial Schrodinger equation for a scattering state.
+
+    Parameters
+    ----------
+    E : float
+        Particle's energy
+    l : int
+        Angular momentum quantum number.
+    potential : callable
+        Potential energy to be used.
+    wkb : bool
+        Boolean flag that indicates whether we want to use the WKB seed
+        over the power law seed.
+    grid : class
+        Mesh on which the integration is to be performed.
+    solver : class
+        Solver parameters to be used in the integration.
+    kwargs : dict
+        Additional arguments of the potential energy.
+
+    Returns
+    -------
+    coord : ndarray
+        Radial grid points of the eigenstate found.
+    psi : ndarray
+        Reconstructed wavefunction of the eigenstate found.
+    """
+    # check whether the problem is actually well-posed
+    # meaning that on the right we're in a classial allowed region
+    if not isin_classical_region(grid.r_max, E, l, potential, **kwargs):
+        raise ValueError("The final point of the mes is within a non-classical region : ill-defined scattering problem.")
+
+    if wkb:
+        psi_0 = 1
+        psi_1 = WKB_seed(E, l, grid.r_min, grid.h, potential, outward = True, **kwargs)
+    else:
+        psi_0 = np.pow(grid.r_min, l + 1)
+        psi_1 = np.pow(grid.r_min + grid.h, l + 1)
+
+    coord, psi = _integrate_numerov(E, l, potential, psi_0, psi_1, grid, solver, outward = True, **kwargs)
+
+    return (coord, psi)
+
+def helper_grid_lj(h, r_max, k = 0.4, sigma = 1):
+    """
+    Build a good Grid object for problems using Lennard-Jones potentials.
+
+    Paramaters
+    ----------
+    h : float
+        Integration step.
+    r_max : float
+        Last point of the mesh.
+    k : float
+        Fraction of sigma from which the integration must start.
+    sigma : float
+        Sigma parameter of the Lennard-Jones potential.
+
+    Returns
+    -------
+    grid : class
+        Well-initialized Grid object.
+    """
+    grid = Grid(k * sigma, r_max, h)
+    return grid
+
+def wave_vector(E, m = 1):
+    """
+    Compute the modulus of the wave vector from the energy and mass.
+
+    Parameters
+    ----------
+    E : float
+        Particle's energy.
+    m : float
+        Particle's mass.
+
+    Returns
+    -------
+    k : float
+        Particle's wave vector.
+    """
+    k = np.sqrt(2*m*E)
+    return k
+
+def _tan_phase_shift(k, l, r1, r2, u1, u2):   
+    """
+    Compute the tangent of the phase shift associated to the l-wave.
+
+    Parameters
+    ----------
+    k : float
+        Particle's wave vector.
+    l : int
+        Angular momentum for which the phase shift is to be computed.
+    r1 : float
+        First point in which the wave function is evaluated.
+    r2 : float
+        Second point in which the wave function is evaluated.
+    u1 : float
+        Numerical value of the wave function at r1.
+    u2 : float
+        Numerical value of the wave function at r2.
+
+    Returns
+    -------
+    tan_phase_shift : float
+        Tangent of the phase shift associated to the l-wave.
+    """
+    kappa = u1 * r2 / (u2 * r1)
+    tan_phase_shift = (sp.special.jv(l,k*r1) - kappa * sp.special.jv(l,k*r2))/(sp.special.yv(l,k*r1) - kappa * sp.special.yv(l,k*r2))
+    return tan_phase_shift
+
+def _phase_shift(k, l, r1, r2, u1, u2):
+    """
+    Compute the phase shift associated to the l-wave.
+
+    Parameters
+    ----------
+    k : float
+        Particle's wave vector.
+    l : int
+        Angular momentum for which the phase shift is to be computed.
+    r1 : float
+        First point in which the wave function is evaluated.
+    r2 : float
+        Second point in which the wave function is evaluated.
+    u1 : float
+        Numerical value of the wave function at r1.
+    u2 : float
+        Numerical value of the wave function at r2.
+
+    Returns
+    -------
+    tan_phase_shift : float
+        Phase shift associated to the l-wave.
+    """
+    phase_shift = np.arctan(_tan_phase_shift(k, l, r1, r2, u1, u2))
+    return phase_shift
+
+def phaseshift(psi,coord,E,start_index,end_index,delta_index,l,N): #function, coordinates, indeces of starting, ending
+    k = wave_vector(E)
+    tan_phaseshift = []
+
+    if end_index - N * delta_index < start_index:
+        raise ValueError('')
+    
+    for i in range (0,N):
+        tan_phaseshift.append(_tan_phase_shift(k,l,coord[start_index+i*delta_index],coord[start_index+(i+1)*delta_index],psi[start_index+i*delta_index],psi[start_index+(i+1)*delta_index]))
+    return (np.mean(tan_phaseshift), np.std(tan_phaseshift))
