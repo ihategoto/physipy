@@ -31,9 +31,10 @@ physipy/
 ├── src/
 │   └── physipy/
 │       ├── __init__.py
-│       ├── numerics.py
 │       ├── bound_states.py
+│       ├── numerics.py
 │       ├── potentials.py
+        ├── scattering.py
 │       └── wkb.py
 ├── notebooks/
 │   └── *.ipynb
