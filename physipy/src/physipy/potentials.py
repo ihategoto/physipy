@@ -1,10 +1,13 @@
 import numpy as np
+from physipy.numerics import Grid, SolverOpts
+import physipy.constants as constants
 
 __all__ = [
     "harmonic",
     "lennard_jones",
     "isin_classical_region",
-    "k"
+    "k",
+    "wave_vector"
 ]
 
 def harmonic(r, m = 1, omega = 1):
@@ -82,7 +85,6 @@ def isin_classical_region(r, E, l, potential, **kwargs):
     f = (E - v_eff) > 0
     return f
 
-
 def k(r, l, E, potential, **kwargs):
     """
     Calculate the k function for the Schrödinger equation given the potential.
@@ -113,7 +115,49 @@ def k(r, l, E, potential, **kwargs):
     if (isinstance(r, np.ndarray) and np.any(r == 0)) or np.any(r == 0):
         raise ValueError('Evaluating potential at the singular point 0.')
     
-    centr_barrier = 0.5 * l * (l+1)/(m*r*r)
+    centr_barrier = 0.5 * (constants.hbar * constants.hbar) / m * l * (l + 1)/(r * r)
     pot = potential(r, **kwargs)
-    k = 2 * (E - pot - centr_barrier)
+    k = 2 * m / (constants.hbar * constants.hbar) * (E - pot - centr_barrier)
     return k 
+
+def helper_grid_lj(h, r_max, k = 0.4, sigma = 1):
+    """
+    Build a good Grid object for problems using Lennard-Jones potentials.
+
+    Paramaters
+    ----------
+    h : float
+        Integration step.
+    r_max : float
+        Last point of the mesh.
+    k : float
+        Fraction of sigma from which the integration must start.
+    sigma : float
+        Sigma parameter of the Lennard-Jones potential.
+
+    Returns
+    -------
+    grid : class
+        Well-initialized Grid object.
+    """
+    grid = Grid(k * sigma, r_max, h)
+    return grid
+
+def wave_vector(E, m = 1):
+    """
+    Compute the modulus of the wave vector from the energy and mass.
+
+    Parameters
+    ----------
+    E : float
+        Particle's energy.
+    m : float
+        Particle's mass.
+
+    Returns
+    -------
+    k : float
+        Particle's wave vector.
+    """
+    k = np.sqrt(2*m*E) / constants.hbar
+    return k
