@@ -34,9 +34,9 @@ def _integrate_scattering_state(E, l, potential, wkb = False, grid = Grid(), sol
         Reconstructed wavefunction of the eigenstate found.
     """
     # check whether the problem is actually well-posed
-    # meaning that on the right we're in a classial allowed region
+    # meaning that on the right we're in a classical allowed region
     if not isin_classical_region(grid.r_max, E, l, potential, **kwargs):
-        raise ValueError("The final point of the mes is within a non-classical region : ill-defined scattering problem.")
+        raise ValueError("The final point of the mesh is within a non-classical region : ill-defined scattering problem.")
 
     if wkb:
         psi_0 = 1
@@ -48,48 +48,6 @@ def _integrate_scattering_state(E, l, potential, wkb = False, grid = Grid(), sol
     coord, psi = _integrate_numerov(E, l, potential, psi_0, psi_1, grid, solver, outward = True, **kwargs)
 
     return (coord, psi)
-
-def helper_grid_lj(h, r_max, k = 0.4, sigma = 1):
-    """
-    Build a good Grid object for problems using Lennard-Jones potentials.
-
-    Paramaters
-    ----------
-    h : float
-        Integration step.
-    r_max : float
-        Last point of the mesh.
-    k : float
-        Fraction of sigma from which the integration must start.
-    sigma : float
-        Sigma parameter of the Lennard-Jones potential.
-
-    Returns
-    -------
-    grid : class
-        Well-initialized Grid object.
-    """
-    grid = Grid(k * sigma, r_max, h)
-    return grid
-
-def wave_vector(E, m = 1):
-    """
-    Compute the modulus of the wave vector from the energy and mass.
-
-    Parameters
-    ----------
-    E : float
-        Particle's energy.
-    m : float
-        Particle's mass.
-
-    Returns
-    -------
-    k : float
-        Particle's wave vector.
-    """
-    k = np.sqrt(2*m*E)
-    return k
 
 def _tan_phase_shift(k, l, r1, r2, u1, u2):   
     """
@@ -116,7 +74,7 @@ def _tan_phase_shift(k, l, r1, r2, u1, u2):
         Tangent of the phase shift associated to the l-wave.
     """
     kappa = u1 * r2 / (u2 * r1)
-    tan_phase_shift = (sp.special.jv(l,k*r1) - kappa * sp.special.jv(l,k*r2))/(sp.special.yv(l,k*r1) - kappa * sp.special.yv(l,k*r2))
+    tan_phase_shift = (sp.special.jv(l, k * r1) - kappa * sp.special.jv(l, k * r2))/(sp.special.yv(l, k * r1) - kappa * sp.special.yv(l, k * r2))
     return tan_phase_shift
 
 def _phase_shift(k, l, r1, r2, u1, u2):
@@ -146,13 +104,39 @@ def _phase_shift(k, l, r1, r2, u1, u2):
     phase_shift = np.arctan(_tan_phase_shift(k, l, r1, r2, u1, u2))
     return phase_shift
 
-def phaseshift(psi,coord,E,start_index,end_index,delta_index,l,N): #function, coordinates, indeces of starting, ending
-    k = wave_vector(E)
-    tan_phaseshift = []
+def compute_phase_shift(psi, coord, E, l, start_index, delta_index, N = 1, tan = True): #function, coordinates, indeces of starting, ending
+    """
+    Compute phase shift using two points of the asymptotic region of the scattering state.
 
-    if end_index - N * delta_index < start_index:
-        raise ValueError('')
+    Parameters
+    ----------
+    psi : ndarray
+        Wave function of the scattering state.
+    coord : ndarray
+        Coordinates of the wave function.
+    E : float
+        Particle's energy.
+    l : int
+        Angular momentum quantum number.
+    start_index : int
+        Start of the asymptotic region.
+    delta_index : int
+        Index step between the two points that are used to compute the phase shift.
+    N : int
+        Number of phase shifts to be evaluated to assess the asymptotic region.
+    tan : bool
+        Boolean flag indicating whether the tangent or the angle is to be returned.
+    """
+    k = wave_vector(E)
+
+    # check the consistency of the input
+    assert len(psi) == len(coord)
+    assert start_index + N * delta_index <= len(psi)
     
-    for i in range (0,N):
-        tan_phaseshift.append(_tan_phase_shift(k,l,coord[start_index+i*delta_index],coord[start_index+(i+1)*delta_index],psi[start_index+i*delta_index],psi[start_index+(i+1)*delta_index]))
-    return (np.mean(tan_phaseshift), np.std(tan_phaseshift))
+    eval_function = _tan_phase_shift if tan else _phase_shift
+    results = []
+
+    for i in range (0, N):
+        results.append(eval_function(k, l, coord[start_index + i * delta_index], coord[start_index + (i + 1) * delta_index], psi[start_index + i * delta_index], psi[start_index + (i + 1) * delta_index]))
+    
+    return (np.mean(results), np.std(results))
