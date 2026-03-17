@@ -119,12 +119,12 @@ def _integrate_numerov(E, l, potential, psi_0, psi_1, grid = Grid(), solver = So
     psi.append(psi_0)
     psi.append(psi_1)
     coord.append(r)
-    coord.append(r+h)
+    coord.append(r + h)
 
     while (r < r_max and outward) or (r > r_min and not outward):
         k_prev = k(r, l, E, potential, **kwargs)
-        k_curr = k(r+h, l, E, potential, **kwargs)
-        k_next = k(r+2*h, l, E, potential, **kwargs)
+        k_curr = k(r + h, l, E, potential, **kwargs)
+        k_next = k(r + 2 * h, l, E, potential, **kwargs)
         temp = _numerov_step(psi_0, psi_1, k_prev, k_curr, k_next, h)
         psi.append(temp)
         if abs(temp) > solver.renorm_threshold:
