@@ -32,6 +32,7 @@ physipy/
 │   └── physipy/
 │       ├── __init__.py
 │       ├── bound_states.py
+        ├── constants.py
 │       ├── numerics.py
 │       ├── potentials.py
         ├── scattering.py
