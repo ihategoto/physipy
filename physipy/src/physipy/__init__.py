@@ -1,4 +1,5 @@
 from physipy.bound_states import *
+from physipy.scattering import *
 from physipy.numerics import *
 from physipy.potentials import *
 from physipy.wkb import *
@@ -17,5 +18,6 @@ __all__ = [
     "hbar",
     "c",
     "alpha",
-    "e"
+    "e",
+    "compute_phase_shift"
 ]
