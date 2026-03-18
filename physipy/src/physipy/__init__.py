@@ -1,9 +1,11 @@
-from physipy.bound_states import *
-from physipy.scattering import *
+from physipy.utils import *
+from physipy.constants import *
 from physipy.numerics import *
 from physipy.potentials import *
 from physipy.wkb import *
-from physipy.constants import *
+from physipy.bound_states import *
+from physipy.scattering import *
+
 
 __all__ = [
     "bisection",
@@ -14,10 +16,12 @@ __all__ = [
     "harmonic",
     "lennard_jones",
     "isin_classical_region",
-    "k",
+    "k_squared",
     "hbar",
     "c",
     "alpha",
     "e",
-    "compute_phase_shift"
+    "compute_phase_shift",
+    "bessel_j",
+    "bessel_n"
 ]
