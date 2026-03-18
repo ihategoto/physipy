@@ -1,5 +1,5 @@
 import numpy as np
-from physipy.potentials import k
+from physipy.utils import *
 
 __all__ = []
 
@@ -33,7 +33,7 @@ def WKB_seed(E, l, r, h, potential, outward = False, **kwargs):
 
     """
     h = -1 * h if not outward else h
-    k_1 = k(r, l, E, potential, **kwargs)
-    k_2 = k(r + h, l, E, potential, **kwargs)
+    k_1 = k_squared(r, l, E, potential, **kwargs)
+    k_2 = k_squared(r + h, l, E, potential, **kwargs)
     wkb_seed = np.sqrt(k_1 / k_2) * np.exp(h / 2 * (k_1 + k_2))
     return wkb_seed
