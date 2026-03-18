@@ -4,6 +4,10 @@ from physipy.potentials import *
 from physipy.wkb import WKB_seed
 from physipy.numerics import _integrate_numerov, Grid, SolverOpts, Eigenstate
 
+__all__ = [
+    "compute_phase_shift"
+]
+
 def _integrate_scattering_state(E, l, potential, wkb = False, grid = Grid(), solver = SolverOpts(), **kwargs):
     """
     Perform Numerov integration of the radial Schrodinger equation for a scattering state.
