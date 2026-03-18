@@ -81,7 +81,12 @@ def isin_classical_region(r, E, l, potential, **kwargs):
     if (isinstance(r, np.ndarray) and np.any(r == 0)) or np.any(r == 0):
         raise ValueError('Evaluating potential at the singular point 0.')
     
-    v_eff = potential(r, **kwargs) + 0.5 * l * (l+1)/(m*r*r)
+    if 'k' in kwargs:
+        pre_factor = kwargs['k']
+        v_eff = potential(r, **kwargs) + 0.5 * (constants.hbar * constants.hbar) / m * l * (l + 1)/(r * r)
+    else:
+        v_eff = potential(r, **kwargs) + 0.5 * (constants.hbar * constants.hbar) / m * l * (l + 1)/(r * r)
+
     f = (E - v_eff) > 0
     return f
 
@@ -117,7 +122,12 @@ def k(r, l, E, potential, **kwargs):
     
     centr_barrier = 0.5 * (constants.hbar * constants.hbar) / m * l * (l + 1)/(r * r)
     pot = potential(r, **kwargs)
-    k = 2 * m / (constants.hbar * constants.hbar) * (E - pot - centr_barrier)
+
+    if 'k' in kwargs:
+        pre_factor = kwargs['k']
+        k = 2 / pre_factor * (E - pot - centr_barrier)
+    else:
+        k = 2 * m / (constants.hbar * constants.hbar) * (E - pot - centr_barrier)
     return k 
 
 def helper_grid_lj(h, r_max, k = 0.4, sigma = 1):
