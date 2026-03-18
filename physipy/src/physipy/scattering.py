@@ -1,14 +1,19 @@
 import numpy as np
 import scipy as sp
+
+from physipy.utils import *
 from physipy.potentials import *
 from physipy.wkb import WKB_seed
 from physipy.numerics import _integrate_numerov, Grid, SolverOpts, Eigenstate
 
 __all__ = [
-    "compute_phase_shift"
+    "integrate_scattering_state",
+    "compute_phase_shift",
+    "normalize_scattering_state",
+    "normalize_lj_scattering_state"
 ]
 
-def _integrate_scattering_state(E, l, potential, wkb = False, grid = Grid(), solver = SolverOpts(), **kwargs):
+def integrate_scattering_state(E, l, potential, wkb = False, grid = Grid(), solver = SolverOpts(), **kwargs):
     """
     Perform Numerov integration of the radial Schrodinger equation for a scattering state.
 
@@ -39,7 +44,7 @@ def _integrate_scattering_state(E, l, potential, wkb = False, grid = Grid(), sol
     """
     # check whether the problem is actually well-posed
     # meaning that on the right we're in a classical allowed region
-    if not isin_classical_region(grid.r_max, E, l, potential, **kwargs):
+    if not np.any(isin_classical_region(grid.r_max, E, l, potential, **kwargs)):
         raise ValueError("The final point of the mesh is within a non-classical region : ill-defined scattering problem.")
 
     if wkb:
@@ -78,7 +83,7 @@ def _tan_phase_shift(k, l, r1, r2, u1, u2):
         Tangent of the phase shift associated to the l-wave.
     """
     kappa = u1 * r2 / (u2 * r1)
-    tan_phase_shift = (sp.special.jv(l, k * r1) - kappa * sp.special.jv(l, k * r2))/(sp.special.yv(l, k * r1) - kappa * sp.special.yv(l, k * r2))
+    tan_phase_shift = (sp.special.spherical_jn(l, k * r1) - kappa * sp.special.spherical_jn(l, k * r2))/(sp.special.spherical_yn(l, k * r1) - kappa * sp.special.spherical_yn(l, k * r2))
     return tan_phase_shift
 
 def _phase_shift(k, l, r1, r2, u1, u2):
@@ -108,7 +113,7 @@ def _phase_shift(k, l, r1, r2, u1, u2):
     phase_shift = np.arctan(_tan_phase_shift(k, l, r1, r2, u1, u2))
     return phase_shift
 
-def compute_phase_shift(psi, coord, E, l, start_index, delta_index, N = 1, tan = True): #function, coordinates, indeces of starting, ending
+def compute_phase_shift(psi, coord, E, l, start_index, delta_index, N = 1, tan = True):
     """
     Compute phase shift using two points of the asymptotic region of the scattering state.
 
@@ -144,3 +149,41 @@ def compute_phase_shift(psi, coord, E, l, start_index, delta_index, N = 1, tan =
         results.append(eval_function(k, l, coord[start_index + i * delta_index], coord[start_index + (i + 1) * delta_index], psi[start_index + i * delta_index], psi[start_index + (i + 1) * delta_index]))
     
     return (np.mean(results), np.std(results))
+
+def normalize_scattering_state(psi):
+    """
+    Compute the normalized wave function. 
+    Also support multiple wave functions as input.
+
+    Parameters
+    ----------
+    psi : ndarray
+        Can either be the plain wavefunction or an ndarray containing several wavefunctions.
+
+    Returns
+    -------
+    normalized_state : ndarray
+        Normalized wavefunction(s).
+    """
+    assert isinstance(psi, np.ndarray)
+
+    if len(psi.shape) == 1:
+        normalized_state = psi/np.max(psi)
+    else:
+        normalized_state = psi/np.max(psi, axis = 1)
+    
+    return normalized_state
+
+def normalize_lj_scattering_state(coord, psi, sigma = 1, n = 1):
+    assert isinstance(psi, np.ndarray)
+    
+    asymptotic_regime = np.where(coord > n * sigma, 1, 0)
+    temp = psi * asymptotic_regime
+
+    normalized_state = psi / np.max(temp)
+
+    return normalized_state
+
+def cross_section(E, ls, ps_l):
+    tot_cr = 4 * np.pi * np.sum((2 + ls + 1) * np.pow(np.sin(ps_l), 2))
+    return tot_cr
