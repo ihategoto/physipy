@@ -1,6 +1,8 @@
 import numpy as np
-from physipy.potentials import *
+
+from physipy.utils import *
 from physipy.numerics import _integrate_numerov, Grid, SolverOpts, Eigenstate
+from physipy.potentials import *
 from physipy.wkb import WKB_seed
 
 __all__ = [
