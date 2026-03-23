@@ -77,7 +77,7 @@ def helper_grid_lj(h, r_max, k = 0.4, sigma = 1):
     grid = Grid(k * sigma, r_max, h)
     return grid
 
-def wave_vector(E, m = 1, **kwargs):
+def wave_vector(E, **kwargs):
     """
     Compute the modulus of the wave vector from the energy and mass.
 
@@ -87,15 +87,19 @@ def wave_vector(E, m = 1, **kwargs):
         Particle's energy.
     m : float
         Particle's mass.
+    kwargs : dict
+        - Entry 'hbar_squared_over_2_m" contains the dimensional constant to be used.
+        - Entry 'm' contains the particle's mass.
 
     Returns
     -------
     k : float
         Particle's wave vector.
     """
-    if 'k' in kwargs:
-        k = np.sqrt(E * kwargs['k'])
+    if 'hbar_squared_over_2_m' in kwargs:
+        k = np.sqrt(E / kwargs['hbar_squared_over_2_m'])
     else:
+        m = 1 if not 'm' in kwargs else kwargs['m']
         k = np.sqrt(2*m*E) / constants.hbar
     
     return k

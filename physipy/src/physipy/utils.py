@@ -5,49 +5,44 @@ __all__ = [
     'k_squared',
     'isin_classical_region',
     'bessel_j',
-    'bessel_n'
+    'bessel_n',
+    'isin_asymptotic_region'
 ]
 
 def k_squared(r, l, E, potential, **kwargs):
-    """
-    Calculate the k function for the Schrödinger equation given the potential.
-    
-    Parameters
-    ----------
-    r : float
-        Position at which k is evaluated.
-    l : int
-        Angular momentum quantum number.
-    E : float or ndarray
-        Energy(s) of the particle.
-    potential : callable
-        Potential energy to be used to compute k.
-    **kwargs : dict
-        Additional arguments of the potential energy.
-    
-    Returns
-    -------
-    k : float or None
+    r = np.atleast_1d(r)
+    r[r < 1e-10] = 1e-10
 
-    """
-    if 'm' in kwargs:
-        m = kwargs['m']
-    else:
-        m = 1
-
-    if (isinstance(r, np.ndarray) and np.any(r == 0)) or np.any(r == 0):
-        raise ValueError('Evaluating potential at the singular point 0.')
-    
-    centr_barrier = 0.5 * (constants.hbar * constants.hbar) / m * l * (l + 1)/(r * r)
     pot = potential(r, **kwargs)
 
-    if 'k' in kwargs:
-        pre_factor = kwargs['k']
-        k = 2 / pre_factor * (E - pot - centr_barrier)
+    if 'hbar_squared_over_2_m' in kwargs:
+        pre_factor = kwargs['hbar_squared_over_2_m']
+        centr_barrier = pre_factor * l * (l + 1)/(r * r)
+        k = (E[:, None] - pot[None, :] - centr_barrier[None, :]) / pre_factor
     else:
-        k = 2 * m / (constants.hbar * constants.hbar) * (E - pot - centr_barrier)
+        m = 1 if not 'm' in kwargs else kwargs['m']
+        centr_barrier = 0.5 * (constants.hbar * constants.hbar) / m * l * (l + 1)/(r * r)
+        k = 2 * m / (constants.hbar * constants.hbar) * (E[:, None] - pot[None, :] - centr_barrier[None, :])
 
     return k 
+
+def isin_asymptotic_region(psi, coord, k, node_tol = 1e-2, rejection_ratio = 0.1):
+    """
+    Estimate k²(r) = -psi''(r) / psi(r) numerically.
+    Points where |psi| < node_tol * max(|psi|) are masked.
+    """
+    h = coord[1] - coord[0]
+    psi_pp = (psi[:-2] - 2*psi[1:-1] + psi[2:]) / h**2
+    
+    psi_mid = psi[1:-1]
+    r_mid   = coord[1:-1]
+    
+    # Mask near-node points
+    mask = np.abs(psi_mid) > node_tol
+    k2_local = np.mean(-psi_pp[mask] / psi_mid[mask])
+    
+    return (k2_local - k**2) / k**2 < rejection_ratio
+    
 
 def isin_classical_region(r, E, l, potential, **kwargs):
     """
@@ -64,7 +59,9 @@ def isin_classical_region(r, E, l, potential, **kwargs):
     potential : callable
         Potential energy to be used.
     **kwargs : dict
-        Additional arguments of the potential energy.
+        - Entry 'hbar_squared_over_2_m' contains the dimensional constant to be used.
+        - Entry 'm' particle's mass.
+        - Additional parameters for the potential used.
     
     Returns
     -------
@@ -72,18 +69,14 @@ def isin_classical_region(r, E, l, potential, **kwargs):
         True if r is in the classical region for the given potential, False otherwise.
     
     """
-    if 'm' in kwargs:
-        m = kwargs['m']
-    else:
-        m = 1
-    
     if r == 0:
         r = 1e-20
     
-    if 'k' in kwargs:
-        pre_factor = kwargs['k']
+    if 'hbar_squared_over_2_m' in kwargs:
+        pre_factor = kwargs['hbar_squared_over_2_m']
         v_eff = potential(r, **kwargs) + pre_factor * l * (l + 1)/(r * r)
     else:
+        m = 1 if not 'm' in kwargs else kwargs['m']
         v_eff = potential(r, **kwargs) + 0.5 * (constants.hbar * constants.hbar) / m * l * (l + 1)/(r * r)
 
     f = (E - v_eff) > 0

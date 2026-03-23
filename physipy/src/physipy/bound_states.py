@@ -70,11 +70,11 @@ def _integrate_bound_state(E, l, potential, psi_0_outward, psi_1_outward, psi_0_
 
     # outward integration (classical region)
     outward_grid = Grid(grid.r_min, r_match, grid.h)
-    coord_outward, psi_outward = _integrate_numerov(E, l, potential, psi_0_outward, psi_1_outward, outward_grid, solver, outward = True, **kwargs)
+    coord_outward, psi_outward = _integrate_numerov(E, l, potential, psi_0_outward, psi_1_outward, outward_grid, solver, outward = True, store_wavefunction = True, **kwargs)
 
     # inward intergration (non-classical region)
     inward_grid = Grid(r_match, grid.r_max, grid.h)
-    coord_inward, psi_inward = _integrate_numerov(E, l, potential, psi_0_inward, psi_1_inward, inward_grid, solver, outward = False, **kwargs)
+    coord_inward, psi_inward = _integrate_numerov(E, l, potential, psi_0_inward, psi_1_inward, inward_grid, solver, outward = False, store_wavefunction = True, **kwargs)
     
     # calculate matching condition
     temp = psi_outward[::-1]
