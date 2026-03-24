@@ -6,10 +6,33 @@ __all__ = [
     'isin_classical_region',
     'bessel_j',
     'bessel_n',
-    'isin_asymptotic_region'
+    'isin_asymptotic_region',
+    'r_asym_min',
+    'n_points_needed'
 ]
 
+def r_asym_min(E, l, potential, hbar2_over_2mu, safety = 2.0, pot_tol = 0.01, **kwargs):
+    k = np.sqrt(E / hbar2_over_2mu)
+    r_centr  = np.sqrt(hbar2_over_2mu * l * (l + 1) / E) if l > 0 else 0.0
+    r_bessel = l / k if l > 0 else 0.0
+
+    # Search from beyond the LJ repulsive core
+    r_test = 5 * kwargs.get('sigma', 1)
+    v = np.abs(potential(r_test, **kwargs)) 
+    while v > pot_tol * E:
+        r_test += 0.1 * kwargs.get('sigma', 1)
+        v = np.abs(potential(r_test, **kwargs)) 
+
+    return safety * max(r_centr, r_bessel, r_test)
+
+def n_points_needed(E, hbar2_over_2mu, dr, n_cycles = 3):
+    """Number of grid points to cover n_cycles wavelengths."""
+    k = np.sqrt(E / hbar2_over_2mu)
+    lambda_ = 2 * np.pi / k
+    return int(np.ceil(n_cycles * lambda_ / dr))
+
 def k_squared(r, l, E, potential, **kwargs):
+    # E is a scalar here
     r = np.atleast_1d(r)
     r[r < 1e-10] = 1e-10
 
@@ -18,11 +41,11 @@ def k_squared(r, l, E, potential, **kwargs):
     if 'hbar_squared_over_2_m' in kwargs:
         pre_factor = kwargs['hbar_squared_over_2_m']
         centr_barrier = pre_factor * l * (l + 1)/(r * r)
-        k = (E[:, None] - pot[None, :] - centr_barrier[None, :]) / pre_factor
+        k = (E - pot - centr_barrier) / pre_factor
     else:
         m = 1 if not 'm' in kwargs else kwargs['m']
         centr_barrier = 0.5 * (constants.hbar * constants.hbar) / m * l * (l + 1)/(r * r)
-        k = 2 * m / (constants.hbar * constants.hbar) * (E[:, None] - pot[None, :] - centr_barrier[None, :])
+        k = 2 * m / (constants.hbar * constants.hbar) * (E - pot - centr_barrier)
 
     return k 
 

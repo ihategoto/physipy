@@ -32,8 +32,21 @@ def WKB_seed(E, l, r, h, potential, outward = False, **kwargs):
         WKB approximated starting point for the inward integration.
 
     """
-    h = -1 * h if not outward else h
-    k_1 = k_squared(r, l, E, potential, **kwargs)
-    k_2 = k_squared(r + h, l, E, potential, **kwargs)
-    wkb_seed = np.sqrt(k_1 / k_2) * np.exp(h / 2 * (k_1 + k_2))
+    h = -h if not outward else h
+
+    k2_1 = k_squared(r, l, E, potential, **kwargs)
+    k2_2 = k_squared(r + h, l, E, potential, **kwargs)
+
+    k_1 = np.sqrt(np.abs(k2_1))
+    k_2 = np.sqrt(np.abs(k2_2))
+
+    amplitude = np.sqrt(k_1 / k_2) if k_2 > 0 else 1.0
+
+    if k2_1 > 0 and k2_2 > 0:
+        # Oscillatory region — complex phase
+        wkb_seed = amplitude * np.exp(1j * h / 2 * (k_1 + k_2))
+    else:
+        # Evanescent region — real exponential decay
+        wkb_seed = amplitude * np.exp(-h / 2 * (k_1 + k_2))
+
     return wkb_seed
