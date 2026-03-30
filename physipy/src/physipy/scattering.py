@@ -48,13 +48,13 @@ def integrate_scattering_state(E, l, potential, wkb = False, grid = Grid(), solv
         raise ValueError("The final point of the mesh is within a non-classical region : ill-defined scattering problem.")
     
     # check whether the window is large enough for each energy
-    wavelength = 2 * np.pi / wave_vector(E, **kwargs)
-    interval = grid.h * n_points
-    n_cycles = interval / wavelength
-    
-    for _E, wl in zip(E[n_cycles < 2], wavelength[n_cycles < 2]):
-        print(f'For energy {_E:.2f} and l = {l} the taken interval might be too small.')
-        print(f'Wavelength = {wl:.2f} interval = {interval}')
+    if not store_wavefunction:
+        wavelength = 2 * np.pi / wave_vector(E, **kwargs)
+        interval = grid.h * n_points
+        n_cycles = interval / wavelength
+        
+        if n_cycles < 2:
+            print('Too few cycles in the chosen region.')
 
     if wkb:
         psi_0 = 1
@@ -174,6 +174,8 @@ def compute_phase_shift(psi, coord, E, l, **kwargs):
         ps = _phase_shift(k, l, coord[peak], coord[i2], psi[peak], psi[i2])
         if ps is not None:
             estimates.append(ps)
+            print(f"For E={E:.3f} and l={l} r1={coord[peak]:.2f}, r2={coord[i2]:.2f} → δ = {ps:.6f} rad")
+
 
     if len(estimates) == 0:
         raise ValueError("Could not be possible to estimate the phase!")

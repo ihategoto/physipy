@@ -5,6 +5,7 @@ import physipy.constants as constants
 __all__ = [
     "harmonic",
     "lennard_jones",
+    "effective_potential",
     "wave_vector"
 ]
 
@@ -53,6 +54,16 @@ def lennard_jones(r, **kwargs):
 
     E = 4 * epsilon * (np.pow(sigma/r, 12) - np.pow(sigma/r, 6))
     return E
+
+def effective_potential(r, l, potential, **kwargs):
+    if 'hbar_squared_over_2_m' in kwargs:
+        pre_factor = kwargs['hbar_squared_over_2_m']
+        v_eff = potential(r, **kwargs) + pre_factor * l * (l + 1) / (r * r)
+    else:
+        m = 1 if not 'm' in kwargs else kwargs['m']
+        v_eff = potential(r, **kwargs) + 0.5 * (constants.hbar * constants.hbar) / m * l * (l + 1)/(r * r)
+
+    return v_eff
 
 def helper_grid_lj(h, r_max, k = 0.4, sigma = 1):
     """
