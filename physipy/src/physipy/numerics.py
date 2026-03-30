@@ -3,6 +3,7 @@ import numpy as np
 import math as mt
 
 from physipy.utils import *
+from physipy.cython import numerics
 
 __all__ = [
     "Grid",
@@ -181,6 +182,8 @@ def _integrate_numerov_vectorized(E, l, potential, psi_0, psi_1, grid = Grid(), 
 
     return (coord, psi)
 
+
+'''
 def _integrate_numerov(E, l, potential, psi_0, psi_1, grid = Grid(), solver = SolverOpts(), outward = True, store_wavefunction = False, n_points = 2, **kwargs):
     """
     Perform a Numerov integration of the radial Schrödinger equation.
@@ -276,3 +279,63 @@ def _integrate_numerov(E, l, potential, psi_0, psi_1, grid = Grid(), solver = So
         psi = psi[::-1]
 
     return (coord, psi)
+'''
+
+def _integrate_numerov(E, l, potential, psi_0, psi_1, grid = Grid(), solver = SolverOpts(), outward = True, store_wavefunction = False, n_points = 2, **kwargs):
+    """
+    Perform a Numerov integration of the radial Schrödinger equation.
+
+    Parameters
+    ----------
+    E : float or ndarray
+        Particle's energy.
+    l : int
+        Angular momentum quantum number.
+    potential : callable
+        Potential energy to be used.
+    psi_0 : float
+        First seed value for Numerov integration.
+    psi_1 : float
+        Second seed value for Numerov integration.
+    grid : class
+        Mesh on which the integration is to be performed.
+    solver : class
+        Solver parameters to be used in the integration.
+    outward : bool
+        Flag to select the direction of the integration.
+    store_wavefunction : bool
+        Boolean flag that tells if the whole wavefunction(s) is to be stored.
+    n_points : int
+        Number of points (>2) to be stored if store_wavefunction is False.
+    kwargs : dict
+        Additional arguments of the potential energy.
+
+    Returns
+    -------
+    coord : ndarray or None
+        Radial grid points if .
+    psi : ndarray
+        Solution wavefunction.
+    
+    """
+    r_min = grid.r_min
+    r_max = grid.r_max
+    h = grid.h if outward else -1 * grid.h
+    n_steps = mt.ceil(abs(r_max - r_min) / abs(grid.h))
+    coord  = r_min + np.arange(n_steps) * abs(grid.h)
+    psi = np.zeros(n_steps)
+    k2 = k_squared(coord, l, E, potential, **kwargs)
+    
+    psi = numerics._integrate_numerov_cython(psi_0, psi_1, h, solver.renorm_threshold, solver.renorm_factor, psi, k2)
+    
+    if not store_wavefunction:
+        coord = coord[-n_points:]
+        psi = psi[-n_points:]
+
+    if not outward:
+        # reverse the lists containing the coordinates and values of the solution
+        coord = coord[::-1]
+        psi = psi[::-1]
+
+    return (coord, psi)
+
