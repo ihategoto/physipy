@@ -13,3 +13,6 @@ dist/
 
 # Jupyter
 .ipynb_checkpoints/
+
+# Images
+imgs/
