@@ -183,10 +183,10 @@ def _integrate_numerov_vectorized(E, l, potential, psi_0, psi_1, grid = Grid(), 
     return (coord, psi)
 
 
-'''
-def _integrate_numerov(E, l, potential, psi_0, psi_1, grid = Grid(), solver = SolverOpts(), outward = True, store_wavefunction = False, n_points = 2, **kwargs):
+def _integrate_numerov(E, l, potential, psi_0, psi_1, grid = Grid(), solver = SolverOpts(), outward = True, store_wavefunction = False, n_points = None, **kwargs):
     """
     Perform a Numerov integration of the radial Schrödinger equation.
+    It uses Cython-based Numerov's step.
 
     Parameters
     ----------
@@ -221,103 +221,9 @@ def _integrate_numerov(E, l, potential, psi_0, psi_1, grid = Grid(), solver = So
         Solution wavefunction.
     
     """
-    r_min = grid.r_min
-    r_max = grid.r_max
-    h = grid.h if outward else -1 * grid.h
-    r = grid.r_min if outward else grid.r_max
-    n_steps = mt.ceil(abs(r_max - r_min) / abs(grid.h))
-    grid  = r_min + np.arange(n_steps) * abs(grid.h)
+    if not store_wavefunction and n_points is None:
+        raise ValueError('Both store_wavefunction and n_points are None.')
 
-    # initialize psi and coord with known points
-    if store_wavefunction:
-        coord = np.zeros(n_steps)
-        psi = np.zeros(n_steps)
-        psi[0] = psi_0
-        psi[1] = psi_1
-        coord[0] = r
-        coord[1] = r + h
-    else:
-        coord = np.zeros(n_points)
-        psi = np.zeros(n_points)
-        psi[-2] = psi_0
-        psi[-1] = psi_1
-        coord[-2] = r
-        coord[-1] = r + h
-
-    k = k_squared(grid, l, E, potential, **kwargs)
-    k_prev = k[0]
-    k_curr = k[1]
-    i = 2
-
-    while i < n_steps:
-        k_next = k[i]
-        if store_wavefunction:
-            temp = _numerov_step(psi[i - 2], psi[i - 1], k_prev, k_curr, k_next, h)
-            psi[i] = temp
-        else:
-            temp = _numerov_step(psi[-2], psi[-1], k_prev, k_curr, k_next, h)
-            psi[:-1] = psi[1:]
-            psi[-1] = temp
-
-        # normalize to prevent blow up
-        if temp > solver.renorm_threshold:
-            psi *= solver.renorm_factor
-
-        k_prev = k_curr
-        k_curr = k_next
-        r += h
-        if store_wavefunction:
-            coord[i] = r + h
-        else:
-            coord[:-1] = coord[1:]
-            coord[-1] = r + h
-        i += 1
-    
-    if not outward:
-        # reverse the lists containing the coordinates and values of the solution
-        coord = coord[::-1]
-        psi = psi[::-1]
-
-    return (coord, psi)
-'''
-
-def _integrate_numerov(E, l, potential, psi_0, psi_1, grid = Grid(), solver = SolverOpts(), outward = True, store_wavefunction = False, n_points = 2, **kwargs):
-    """
-    Perform a Numerov integration of the radial Schrödinger equation.
-
-    Parameters
-    ----------
-    E : float or ndarray
-        Particle's energy.
-    l : int
-        Angular momentum quantum number.
-    potential : callable
-        Potential energy to be used.
-    psi_0 : float
-        First seed value for Numerov integration.
-    psi_1 : float
-        Second seed value for Numerov integration.
-    grid : class
-        Mesh on which the integration is to be performed.
-    solver : class
-        Solver parameters to be used in the integration.
-    outward : bool
-        Flag to select the direction of the integration.
-    store_wavefunction : bool
-        Boolean flag that tells if the whole wavefunction(s) is to be stored.
-    n_points : int
-        Number of points (>2) to be stored if store_wavefunction is False.
-    kwargs : dict
-        Additional arguments of the potential energy.
-
-    Returns
-    -------
-    coord : ndarray or None
-        Radial grid points if .
-    psi : ndarray
-        Solution wavefunction.
-    
-    """
     r_min = grid.r_min
     r_max = grid.r_max
     h = grid.h if outward else -1 * grid.h

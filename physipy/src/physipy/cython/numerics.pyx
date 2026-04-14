@@ -19,6 +19,7 @@ cpdef _integrate_numerov_cython(double psi_0, double psi_1, double h, double ren
         temp = (2 * (1 - (5 * h_squared * k_squared[i + 1] / 12)) * psi[i + 1] - (1 + h_squared * k_squared[i] / 12) * psi[i]) / (1 + h_squared * k_squared[i + 2] / 12)
         psi[i + 2] = temp
 
+        # Numerical sanity check
         if np.abs(temp) > renorm_threshold:
             for j in range(i + 3):
                 psi[j] *= renorm_factor
