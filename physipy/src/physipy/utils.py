@@ -107,7 +107,19 @@ def isin_classical_region(r, E, l, potential, **kwargs):
 
 def bessel_j(x, l):
     """
-    Compute
+    Compute spherical Bessel function of the first kind.
+
+    Parameters
+    ----------
+    x : float
+        Position at which the function is to be evaluated.
+    l : int
+        Angular momentum quantum number.
+    
+    Returns
+    -------
+    n_curr : float
+        Function's value.
     """
     x = x if x > 1e-20 else 1e-20
     n_curr = np.sin(x) / x
@@ -124,6 +136,21 @@ def bessel_j(x, l):
     return n_curr
 
 def bessel_n(x, l):
+    """
+    Compute spherical Bessel function of the first kind.
+
+    Parameters
+    ----------
+    x : float
+        Position at which the function is to be evaluated.
+    l : int
+        Angular momentum quantum number.
+        
+    Returns
+    -------
+    n_curr : float
+        Function's value.
+    """
     x = x if x > 1e-20 else 1e-20
     n_curr = (-1) * np.cos(x) / x
     n_prev = np.sin(x) / x

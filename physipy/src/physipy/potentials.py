@@ -17,6 +17,10 @@ def harmonic(r, **kwargs):
     ----------
     r : float or ndarray
         Position(s) at which the potential is evaluated.
+    kwargs : dict
+        Additional parameters for the potential:
+        - m : particle's mass
+        - omega : characteristic frequency
     
     Returns
     -------
@@ -38,10 +42,11 @@ def lennard_jones(r, **kwargs):
     ----------
     r : float or ndarray
         Position(s) at which the potential is evaluated.
-    sigma : float
-        Sigma parameter of the Lennard-Jones potential.
-    epsilon : float
-        Epsilon parameter of the Lennard-Jones potential.
+    kwargs : dict
+        Additional parameters for the potential:
+        - epsilon : potential's depth
+        - omega : characteristic length
+
     
     Returns
     -------
@@ -56,6 +61,22 @@ def lennard_jones(r, **kwargs):
     return E
 
 def effective_potential(r, l, potential, **kwargs):
+    """
+    Calculate the effective potential of the particle.
+
+    Parameters
+    ----------
+    r : float or ndarray
+        Position(s) at which the potential is evaluated.
+    l : int
+        Angular momentum quantum number.
+    potential : callable
+        Potential function to be used.
+    kwargs : dict
+        Additional paramters for both the potential and the dimensional consistency:
+        - hbar_squared_over_2_m : dimensional fixing of the Schrodinger equation
+    
+    """
     if 'hbar_squared_over_2_m' in kwargs:
         pre_factor = kwargs['hbar_squared_over_2_m']
         v_eff = potential(r, **kwargs) + pre_factor * l * (l + 1) / (r * r)

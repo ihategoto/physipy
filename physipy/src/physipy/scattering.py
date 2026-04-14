@@ -215,6 +215,9 @@ def normalize_scattering_state(psi):
     return normalized_state
 
 def normalize_lj_scattering_state(coord, psi, sigma = 1, n = 1):
+    """
+    Buggy
+    """
     assert isinstance(psi, np.ndarray)
     
     asymptotic_regime = np.where(coord > n * sigma, 1, 0)
@@ -225,5 +228,8 @@ def normalize_lj_scattering_state(coord, psi, sigma = 1, n = 1):
     return normalized_state
 
 def cross_section(ls, ps_l):
+    """
+    Buggy
+    """
     tot_cr = 4 * np.pi * np.sum((2 + ls + 1) * np.pow(np.sin(ps_l), 2))
     return tot_cr
