@@ -138,6 +138,7 @@ def bisection(err_prev, err_curr, E_prev, E_curr, l, potential, psi_0_outward, p
         Reconstructed wavefunction of the eigenstate found.
     eigenvalue : float
         Estimated eigenvalue.
+
     """
     if np.sign(err_prev) == np.sign(err_curr):
         print('Error: invalid starting points.')
@@ -152,7 +153,8 @@ def bisection(err_prev, err_curr, E_prev, E_curr, l, potential, psi_0_outward, p
         else:
             E_curr = E_med
             
-    eigenvalue = (E_prev + E_curr)/2
+    eigenvalue = (E_prev + E_curr) / 2
+
     return (coord, psi, eigenvalue)
 
 def energy_levels(E, l, potential, psi_0_outward , grid = Grid(), solver = SolverOpts(), **kwargs):
@@ -200,7 +202,7 @@ def energy_levels(E, l, potential, psi_0_outward , grid = Grid(), solver = Solve
 
     for _l in l:
         for _E in E:
-            psi_1_outward = np.pow(psi_0_outward + h, _l + 1)
+            psi_1_outward = WKB_seed(_E, _l, r_min, h, potential, outward = True, **kwargs)
             psi_1_inward = WKB_seed(_E, _l, r_max, h, potential, outward = False, **kwargs)
             __1, __2, error = _integrate_bound_state(_E, _l, potential, psi_0_outward, psi_1_outward, psi_0_inward, psi_1_inward, grid, solver, **kwargs)
             err_curr = error

@@ -92,8 +92,8 @@ def isin_classical_region(r, E, l, potential, **kwargs):
         True if r is in the classical region for the given potential, False otherwise.
     
     """
-    if r == 0:
-        r = 1e-20
+    r = np.atleast_1d(r)
+    r[r < 1e-20] = 1e-20
     
     if 'hbar_squared_over_2_m' in kwargs:
         pre_factor = kwargs['hbar_squared_over_2_m']
