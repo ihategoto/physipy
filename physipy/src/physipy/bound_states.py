@@ -52,7 +52,7 @@ def _integrate_bound_state(E, l, potential, psi_0_outward, psi_1_outward, psi_0_
     
     # identify the matching point in the grid
     # note: that wwe take the matching point as the right-most classical turning point
-    f = isin_classical_region(np.arange(grid.r_min, grid.r_max, grid.h), E, l, potential, **kwargs)
+    f = isin_classical_region(np.arange(grid.r_min, grid.r_max + grid.h, grid.h), E, l, potential, **kwargs)
     i = len(f) - 1
 
     try:
@@ -160,8 +160,6 @@ def bisection(err_prev, err_curr, E_prev, E_curr, l, potential, psi_0_outward, p
 def energy_levels(E, l, potential, psi_0_outward , grid = Grid(), solver = SolverOpts(), **kwargs):
     """
     Perform the integration using Numerov algorithm for the specified angular momentum list and energy range.
-    If scattering flag is set to False it uses the Numero integration (outward + inward) and Wronskian mismatch method to find eigenvalues of the hamiltonian.
-    If scattering flag is to True it uses the simple outward Numerov's integration method.
     
     Parameters
     ----------
