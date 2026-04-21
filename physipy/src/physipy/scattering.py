@@ -58,7 +58,7 @@ def integrate_scattering_state(E, l, potential, wkb = False, grid = Grid(), solv
 
     if wkb:
         psi_0 = 1
-        psi_1 = WKB_seed(E, l, grid.r_min, grid.h, potential, outward = True, **kwargs)
+        psi_1 = WKB_seed(E, l, grid.r_min, grid.h, potential, outward = True, scattering = True, **kwargs)
     else:
         psi_0 = np.pow(grid.r_min, l + 1)
         psi_1 = np.pow(grid.r_min + grid.h, l + 1)
