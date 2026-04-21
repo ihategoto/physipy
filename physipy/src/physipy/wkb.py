@@ -3,7 +3,7 @@ from physipy.utils import *
 
 __all__ = []
 
-def WKB_seed(E, l, r, h, potential, outward = False, **kwargs):
+def WKB_seed(E, l, r, h, potential, outward = False, scattering = False,  **kwargs):
     """
     Compute the WKB approximated step.
 
@@ -44,7 +44,10 @@ def WKB_seed(E, l, r, h, potential, outward = False, **kwargs):
 
     if k2_1 > 0 and k2_2 > 0:
         # Oscillatory region — complex phase
-        wkb_seed = amplitude * np.exp(1j * h / 2 * (k_1 + k_2))
+        if scattering:
+            wkb_seed = amplitude * np.exp(1j * h / 2 * (k_1 + k_2))
+        else:
+            wkb_seed = np.real(amplitude * np.exp(1j * h / 2 * (k_1 + k_2)))
     else:
         # Evanescent region — real exponential decay
         wkb_seed = amplitude * np.exp(-h / 2 * (k_1 + k_2))
