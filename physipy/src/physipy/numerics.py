@@ -216,7 +216,6 @@ def _integrate_numerov(E, l, potential, psi_0, psi_1, grid = Grid(), solver = So
     Returns
     -------
     coord : ndarray or None
-        Radial grid points if .
     psi : ndarray
         Solution wavefunction.
     
@@ -231,6 +230,9 @@ def _integrate_numerov(E, l, potential, psi_0, psi_1, grid = Grid(), solver = So
     coord  = r_min + np.arange(n_steps) * abs(grid.h)
     psi = np.zeros(n_steps)
     k2 = k_squared(coord, l, E, potential, **kwargs)
+
+    if not outward:
+        k2 = k2[::-1]
     
     psi = numerics._integrate_numerov_cython(psi_0, psi_1, h, solver.renorm_threshold, solver.renorm_factor, psi, k2)
     
@@ -239,8 +241,6 @@ def _integrate_numerov(E, l, potential, psi_0, psi_1, grid = Grid(), solver = So
         psi = psi[-n_points:]
 
     if not outward:
-        # reverse the lists containing the coordinates and values of the solution
-        coord = coord[::-1]
         psi = psi[::-1]
 
     return (coord, psi)
