@@ -3,11 +3,48 @@ from physipy.numerics import Grid, SolverOpts
 import physipy.constants as constants
 
 __all__ = [
+    "gross_pitaevskij",
     "harmonic",
     "lennard_jones",
     "effective_potential",
+    "helper_grid_lj",
     "wave_vector"
 ]
+
+def gross_pitaevskij(r, **kwargs):
+    """
+    Calculate the Gross-Pitaevskij potential a the given positions.
+    
+    Parameters
+    ----------
+    r : float or ndarray
+        Position(s) at which the potential is evaluated.
+    kwargs : dict
+        Additional parameters for the potential:
+        - g : coupling constant.
+        - phi : solution of the previous iteration.
+        - r_min : grid starting point.
+        - r_max : grid ending point.
+        - h : integration step.
+    
+    Returns
+    -------
+    E : float
+        Harmonic potential at the given position.
+
+    """
+    g = 1 if 'g' not in kwargs else kwargs['g']
+    phi = 1 if 'phi' not in kwargs else kwargs['phi']
+    r_min = 0 if 'r_min' not in kwargs else kwargs['r_min']
+    r_max = 5 if 'r_max' not in kwargs else kwargs['r_max']
+    h = 1e-1 if 'is' not in kwargs else kwargs['is']
+
+    coord = np.arange(r_min, r_max + h , h)
+    phi_r = np.interp(r, coord, phi)
+    r_squared = np.pow(r, 2) 
+
+    E = 1/2 * r_squared + g * np.pow(phi_r, 2) / r_squared
+    return E
 
 def harmonic(r, **kwargs):
     """
@@ -132,6 +169,6 @@ def wave_vector(E, **kwargs):
         k = np.sqrt(E / kwargs['hbar_squared_over_2_m'])
     else:
         m = 1 if not 'm' in kwargs else kwargs['m']
-        k = np.sqrt(2*m*E) / constants.hbar
+        k = np.sqrt(2 * m * E) / constants.hbar
     
     return k
