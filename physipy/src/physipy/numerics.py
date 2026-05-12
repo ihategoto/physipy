@@ -15,6 +15,19 @@ __all__ = [
 class Grid:
     """
     Class containing the grid parameters.
+
+    Properties
+    ----------
+    r_min : starting point of the grid
+    r_max : ending point of the grid
+    h : grid step
+
+    Constraints
+    -----------
+    r_min > 0 : Grid represents a radial grid so r must be greater or equal to zero. We don't allow 0 for stability reasons.
+    r_max > r_min : the grid ending point must be greater than the starting point.
+    h > 0 : the grid step must be greater than 0.
+
     """
     r_min: float = 1e-4
     r_max: float = 10
@@ -32,6 +45,14 @@ class Grid:
 class SolverOpts:
     """
     Class containing the numerical stability parameters.
+
+    Properties
+    ----------
+    tol : numerical tolerance for zeros.
+    bisection_tol : numerical tolerance for bisection algorithm.
+    renorm_threshold : numerical threshold before renormalizing.
+    renorm_factor : renormalization factor.
+
     """
     tol: float = 1e-6
     bisection_tol: float = 1e-6
@@ -43,6 +64,14 @@ class SolverOpts:
 class Eigenstate:
     """
     Class containing all the relevant features of an Eigenstate
+
+    Properties
+    ----------
+    E : energy of the eigenstate.
+    l : angular momentum of the eigenstate.
+    coord : coordinate of the eigenstate's wavefunction.
+    psi : eigenstate's wavefunction
+
     """
     E: float
     l: int
@@ -81,6 +110,7 @@ def _numerov_step(psi_prev, psi_curr, k_prev, k_curr, k_next, h):
 def _integrate_numerov_vectorized(E, l, potential, psi_0, psi_1, grid = Grid(), solver = SolverOpts(), outward = True, store_wavefunction = False, n_points = 2, **kwargs):
     """
     Perform a Numerov integration of the radial Schrödinger equation.
+    Not supported.
 
     Parameters
     ----------
@@ -110,7 +140,7 @@ def _integrate_numerov_vectorized(E, l, potential, psi_0, psi_1, grid = Grid(), 
     Returns
     -------
     coord : ndarray or None
-        Radial grid points if .
+        Radial grid points if store_wavefunction is True.
     psi : ndarray
         Solution wavefunction.
     
@@ -176,10 +206,6 @@ def _integrate_numerov_vectorized(E, l, potential, psi_0, psi_1, grid = Grid(), 
         coord = coord[::-1]
         psi = psi[:, ::-1]
     
-    # numpize coord
-    if store_wavefunction:
-        coord = np.array(coord)
-
     return (coord, psi)
 
 
@@ -216,6 +242,7 @@ def _integrate_numerov(E, l, potential, psi_0, psi_1, grid = Grid(), solver = So
     Returns
     -------
     coord : ndarray or None
+        Solution coordinates.
     psi : ndarray
         Solution wavefunction.
     
