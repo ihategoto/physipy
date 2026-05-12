@@ -30,12 +30,18 @@ The main goals of this repository are:
 physipy/
 ├── src/
 │   └── physipy/
+        └── cython/
+                └── *.c
+                ├── *.so
+                ├── numerics.pyx
+                ├── setup.py
 │       ├── __init__.py
 │       ├── bound_states.py
         ├── constants.py
 │       ├── numerics.py
 │       ├── potentials.py
         ├── scattering.py
+        ├── utils.py
 │       └── wkb.py
 ├── notebooks/
 │   └── *.ipynb
