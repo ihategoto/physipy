@@ -17,4 +17,8 @@ dist/
 # Images
 imgs/
 
+# Specific notebooks
+quantum_statistics.ipynb
+
+# MacOS related stuff
 .DS_Store
