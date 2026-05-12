@@ -82,19 +82,20 @@ def _integrate_bound_state(E, l, potential, psi_0_outward, psi_1_outward, psi_0_
     ui0, ui1, ui2 = psi_inward[0], psi_inward[1], psi_inward[2]
 
     # check for numerical stability
-    if abs(uo1) < solver.tol or abs(ui1) < solver.tol:
+    if abs(uo0) < solver.tol or abs(ui0) < solver.tol:
         # match point too close to a node
         print("Numerical stability error: matching region too close to a node of the solution.")
         print("Try again adjusting the buffer.")
-        return (None, None, np.sign(W)*1e30)
+        return (None, None, 1e30)
 
-    duo = (uo0 - uo2) / (2*grid.h)
-    dui = (ui2 - ui0) / (2*grid.h)
+    # 2nd-order one-sided derivatives at r_match
+    duo = (3*uo0 - 4*uo1 + uo2) / (2*grid.h)
+    dui = (-3*ui0 + 4*ui1 - ui2) / (2*grid.h)
 
-    W = uo1 * dui - ui1 * duo
+    W = uo0 * dui - ui0 * duo
 
     # merge outward and inward solutions
-    scale = uo1 / ui1
+    scale = uo0 / ui0
     psi_inward = psi_inward * scale
     psi = np.concatenate((psi_outward, psi_inward))
     coord = np.concatenate((coord_outward, coord_inward))
