@@ -41,6 +41,7 @@ def integrate_scattering_state(E, l, potential, wkb = False, grid = Grid(), solv
         Radial grid points of the eigenstate found.
     psi : ndarray
         Reconstructed wavefunction of the eigenstate found.
+        
     """
     # check whether the problem is well-posed
     # meaning that on the right we're in a classical allowed region
@@ -175,7 +176,6 @@ def compute_phase_shift(psi, coord, E, l, **kwargs):
         if ps is not None:
             estimates.append(ps)
             print(f"For E={E:.3f} and l={l} r1={coord[peak]:.2f}, r2={coord[i2]:.2f} → δ = {ps:.6f} rad")
-
 
     if len(estimates) == 0:
         raise ValueError("Could not be possible to estimate the phase!")
