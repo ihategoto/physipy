@@ -40,16 +40,12 @@ def WKB_seed(E, l, r, h, potential, outward = False, scattering = False,  **kwar
     k_1 = np.sqrt(np.abs(k2_1))
     k_2 = np.sqrt(np.abs(k2_2))
 
-    amplitude = np.sqrt(k_1 / k_2) if k_2 > 0 else 1.0
+    amplitude = np.where(k_2 > 0, np.sqrt(k_1 / k_2), 1.0)
 
-    if k2_1 > 0 and k2_2 > 0:
-        # Oscillatory region — complex phase
-        if scattering:
-            wkb_seed = amplitude * np.exp(1j * h / 2 * (k_1 + k_2))
-        else:
-            wkb_seed = np.real(amplitude * np.exp(1j * h / 2 * (k_1 + k_2)))
+    # If k2_1 >0 and k2_2 > 0 then we are in the oscillatory region, otherwise we have the exponential decay.
+    if scattering:
+        wkb_seed = np.where((k2_1 > 0) & (k2_2 > 0), amplitude * np.exp(1j * h / 2 * (k_1 + k_2)), amplitude * np.exp(-h / 2 * (k_1 + k_2)))
     else:
-        # Evanescent region — real exponential decay
-        wkb_seed = amplitude * np.exp(-h / 2 * (k_1 + k_2))
+        wkb_seed = np.where((k2_1 > 0) & (k2_2 > 0), np.real(amplitude * np.exp(1j * h / 2 * (k_1 + k_2))), amplitude * np.exp(-h / 2 * (k_1 + k_2)))
 
     return wkb_seed
