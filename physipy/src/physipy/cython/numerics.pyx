@@ -1,9 +1,9 @@
-import numpy as np
-cimport numpy as cnp
-
 # cython: boundscheck=False
 # cython: wraparound=False
 # cython: cdivision=True
+
+import numpy as np
+cimport numpy as cnp
 
 cpdef _integrate_numerov_cython(double psi_0, double psi_1, double h, double renorm_threshold, double renorm_factor, double[:] psi, double[:] k_squared):
     cdef Py_ssize_t i, j, n_steps

@@ -1,5 +1,5 @@
 import numpy as np
-from physipy.numerics import Grid, SolverOpts
+from physipy.numerics_data import Grid
 import physipy.constants as constants
 
 __all__ = [
@@ -13,32 +13,38 @@ __all__ = [
 
 def gross_pitaevskij(r, **kwargs):
     """
-    Calculate the Gross-Pitaevskij potential a the given positions.
-    
+    Evaluate the mean-field Gross-Pitaevskii potential at the given positions.
+
+    The potential is V(r) = ½r² + g*(φ(r)/r)², where φ is the radial
+    wavefunction from the previous self-consistent iteration.
+
     Parameters
     ----------
     r : float or ndarray
         Position(s) at which the potential is evaluated.
     kwargs : dict
-        Additional parameters for the potential:
-        - g : coupling constant.
-        - phi : solution of the previous iteration.
-        - r_min : grid starting point.
-        - r_max : grid ending point.
-        - h : integration step.
-    
+        Required and optional parameters:
+        - phi   : ndarray, radial wavefunction from the previous iteration (required).
+        - g     : float, coupling constant Na (default 1).
+        - r_min : float, left endpoint of the phi grid (default 0).
+        - r_max : float, right endpoint of the phi grid (default 5).
+        - h     : float, step size used to reconstruct the phi grid (default 1e-1).
+
     Returns
     -------
-    E : float
-        Harmonic potential at the given position.
-
+    V : ndarray
+        GP potential evaluated at each position in r.
     """
     g = 1 if 'g' not in kwargs else kwargs['g']
-    phi = 1 if 'phi' not in kwargs else kwargs['phi']
     r_min = 0 if 'r_min' not in kwargs else kwargs['r_min']
     r_max = 5 if 'r_max' not in kwargs else kwargs['r_max']
-    h = 1e-1 if 'is' not in kwargs else kwargs['is']
+    h = 1e-1 if 'h' not in kwargs else kwargs['h']
 
+    if 'phi' not in kwargs:
+        raise ValueError('No initial guess provided.')
+    else:
+        phi = kwargs['phi']
+    
     coord = np.arange(r_min, r_max + h , h)
     phi_r = np.interp(r, coord, phi)
     r_squared = np.pow(r, 2) 
@@ -48,22 +54,21 @@ def gross_pitaevskij(r, **kwargs):
 
 def harmonic(r, **kwargs):
     """
-    Calculate the harmonic potential for a given radius.
-    
+    Evaluate the harmonic potential ½mω²r² at the given positions.
+
     Parameters
     ----------
     r : float or ndarray
         Position(s) at which the potential is evaluated.
     kwargs : dict
-        Additional parameters for the potential:
-        - m : particle's mass
-        - omega : characteristic frequency
-    
+        Optional parameters:
+        - m     : float, particle mass (default 1).
+        - omega : float, angular frequency (default 1).
+
     Returns
     -------
-    E : float
-        Harmonic potential at the given position.
-
+    V : float or ndarray
+        Harmonic potential evaluated at each position in r.
     """
     m = 1 if 'm' not in kwargs else kwargs['m']
     omega = 1 if 'omega' not in kwargs else kwargs['omega']
@@ -73,23 +78,21 @@ def harmonic(r, **kwargs):
 
 def lennard_jones(r, **kwargs):
     """
-    Calculate the Lennard-Jones potential for a given radius, sigma and epsilon.
-    
+    Evaluate the Lennard-Jones potential 4ε[(σ/r)¹² − (σ/r)⁶] at the given positions.
+
     Parameters
     ----------
     r : float or ndarray
         Position(s) at which the potential is evaluated.
     kwargs : dict
-        Additional parameters for the potential:
-        - epsilon : potential's depth
-        - omega : characteristic length
+        Optional parameters:
+        - epsilon : float, well depth (default 1).
+        - sigma   : float, characteristic length (default 1).
 
-    
     Returns
     -------
-    E : float
-        Lennard-Jones potential at the given position, sigma and epsilon.
-
+    V : float or ndarray
+        Lennard-Jones potential evaluated at each position in r.
     """
     epsilon = 1 if 'epsilon' not in kwargs else kwargs['epsilon']
     sigma = 1 if 'sigma' not in kwargs else kwargs['sigma']
@@ -99,7 +102,7 @@ def lennard_jones(r, **kwargs):
 
 def effective_potential(r, l, potential, **kwargs):
     """
-    Calculate the effective potential of the particle.
+    Evaluate the effective potential V_eff(r) = V(r) + ℏ²l(l+1)/(2mr²).
 
     Parameters
     ----------
@@ -108,11 +111,16 @@ def effective_potential(r, l, potential, **kwargs):
     l : int
         Angular momentum quantum number.
     potential : callable
-        Potential function to be used.
+        Bare potential V(r) to which the centrifugal barrier is added.
     kwargs : dict
-        Additional paramters for both the potential and the dimensional consistency:
-        - hbar_squared_over_2_m : dimensional fixing of the Schrodinger equation
-    
+        Optional parameters:
+        - hbar_squared_over_2_m : float, prefactor ℏ²/2m (uses natural units if absent).
+        - m                     : float, particle mass (default 1, natural units).
+
+    Returns
+    -------
+    V_eff : float or ndarray
+        Effective potential evaluated at each position in r.
     """
     if 'hbar_squared_over_2_m' in kwargs:
         pre_factor = kwargs['hbar_squared_over_2_m']
@@ -125,45 +133,47 @@ def effective_potential(r, l, potential, **kwargs):
 
 def helper_grid_lj(h, r_max, k = 0.4, sigma = 1):
     """
-    Build a good Grid object for problems using Lennard-Jones potentials.
+    Build a Grid suited for Lennard-Jones problems.
 
-    Paramaters
+    Sets r_min = k*sigma so the integration starts safely outside the
+    repulsive LJ core.
+
+    Parameters
     ----------
     h : float
         Integration step.
     r_max : float
-        Last point of the mesh.
+        Right endpoint of the grid.
     k : float
-        Fraction of sigma from which the integration must start.
+        Fraction of sigma used to set r_min (default 0.4).
     sigma : float
-        Sigma parameter of the Lennard-Jones potential.
+        LJ characteristic length (default 1).
 
     Returns
     -------
-    grid : class
-        Well-initialized Grid object.
+    grid : Grid
+        Grid with r_min = k*sigma, r_max = r_max, h = h.
     """
     grid = Grid(k * sigma, r_max, h)
     return grid
 
 def wave_vector(E, **kwargs):
     """
-    Compute the modulus of the wave vector from the energy and mass.
+    Compute the magnitude of the wave vector k = sqrt(2mE)/ℏ.
 
     Parameters
     ----------
     E : float
-        Particle's energy.
-    m : float
-        Particle's mass.
+        Particle's kinetic energy.
     kwargs : dict
-        - Entry 'hbar_squared_over_2_m" contains the dimensional constant to be used.
-        - Entry 'm' contains the particle's mass.
+        Optional parameters:
+        - hbar_squared_over_2_m : float, prefactor ℏ²/2m (uses natural units if absent).
+        - m                     : float, particle mass (default 1, natural units).
 
     Returns
     -------
     k : float
-        Particle's wave vector.
+        Magnitude of the wave vector.
     """
     if 'hbar_squared_over_2_m' in kwargs:
         k = np.sqrt(E / kwargs['hbar_squared_over_2_m'])

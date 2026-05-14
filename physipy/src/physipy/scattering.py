@@ -4,7 +4,8 @@ import scipy as sp
 from physipy.utils import *
 from physipy.potentials import *
 from physipy.wkb import WKB_seed
-from physipy.numerics import _integrate_numerov, Grid, SolverOpts, Eigenstate
+from physipy.numerics import _integrate_numerov
+from physipy.numerics_data import  Grid, SolverOpts
 
 __all__ = [
     "integrate_scattering_state",
@@ -15,7 +16,7 @@ __all__ = [
 
 def integrate_scattering_state(E, l, potential, wkb = False, grid = Grid(), solver = SolverOpts(), store_wavefunction = True, n_points = 1000, **kwargs):
     """
-    Perform Numerov integration of the radial Schrodinger equation for a scattering state.
+    Perform outward Numerov integration of the radial Schrödinger equation for a scattering state.
 
     Parameters
     ----------
@@ -24,24 +25,27 @@ def integrate_scattering_state(E, l, potential, wkb = False, grid = Grid(), solv
     l : int
         Angular momentum quantum number.
     potential : callable
-        Potential energy to be used.
+        Potential energy function V(r).
     wkb : bool
-        Boolean flag that indicates whether we want to use the WKB seed
-        over the power law seed.
-    grid : class
-        Mesh on which the integration is to be performed.
-    solver : class
-        Solver parameters to be used in the integration.
+        If True, use WKB seed at r_min. If False, use the power-law seed r^(l+1) (default False).
+    grid : Grid
+        Mesh on which the integration is performed (default Grid()).
+    solver : SolverOpts
+        Solver and numerical stability parameters (default SolverOpts()).
+    store_wavefunction : bool
+        If True, store the full wavefunction. If False, store only the last
+        n_points values for phase-shift extraction (default True).
+    n_points : int
+        Number of tail points to store when store_wavefunction is False (default 1000).
     kwargs : dict
-        Additional arguments of the potential energy.
+        Additional arguments forwarded to the potential.
 
     Returns
     -------
     coord : ndarray
-        Radial grid points of the eigenstate found.
+        Radial grid points.
     psi : ndarray
-        Reconstructed wavefunction of the eigenstate found.
-        
+        Radial wavefunction values (full array or tail only, depending on store_wavefunction).
     """
     # check whether the problem is well-posed
     # meaning that on the right we're in a classical allowed region
@@ -59,7 +63,7 @@ def integrate_scattering_state(E, l, potential, wkb = False, grid = Grid(), solv
 
     if wkb:
         psi_0 = 1
-        psi_1 = WKB_seed(E, l, grid.r_min, grid.h, potential, outward = True, scattering = True, **kwargs)
+        psi_1 = WKB_seed(E, l, potential, grid, outward = True, scattering = True, **kwargs)
     else:
         psi_0 = np.pow(grid.r_min, l + 1)
         psi_1 = np.pow(grid.r_min + grid.h, l + 1)
@@ -216,7 +220,10 @@ def normalize_scattering_state(psi):
 
 def normalize_lj_scattering_state(coord, psi, sigma = 1, n = 1):
     """
-    Buggy
+    Normalize a scattering wavefunction to its asymptotic amplitude beyond n*sigma.
+
+    .. warning::
+        This function is experimental and not validated. Use with caution.
     """
     assert isinstance(psi, np.ndarray)
     
@@ -229,7 +236,10 @@ def normalize_lj_scattering_state(coord, psi, sigma = 1, n = 1):
 
 def cross_section(ls, ps_l):
     """
-    Buggy
+    Compute the total scattering cross section from partial-wave phase shifts.
+
+    .. warning::
+        This function is experimental and not validated. Use with caution.
     """
     tot_cr = 4 * np.pi * np.sum((2 + ls + 1) * np.pow(np.sin(ps_l), 2))
     return tot_cr

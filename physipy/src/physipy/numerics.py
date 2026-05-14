@@ -1,82 +1,9 @@
-from dataclasses import dataclass
 import numpy as np
 import math as mt
 
 from physipy.utils import *
 from physipy.cython import numerics
-
-__all__ = [
-    "Grid",
-    "SolverOpts",
-    "Eigenstate"
-]
-
-@dataclass(frozen = True)
-class Grid:
-    """
-    Class containing the grid parameters.
-
-    Properties
-    ----------
-    r_min : starting point of the grid
-    r_max : ending point of the grid
-    h : grid step
-
-    Constraints
-    -----------
-    r_min > 0 : Grid represents a radial grid so r must be greater or equal to zero. We don't allow 0 for stability reasons.
-    r_max > r_min : the grid ending point must be greater than the starting point.
-    h > 0 : the grid step must be greater than 0.
-
-    """
-    r_min: float = 1e-4
-    r_max: float = 10
-    h: float = 1e-3
-
-    def __post_init__(self):
-        if self.r_min <= 0:
-            raise ValueError("Grid r_min must be positive")
-        if self.r_max <= self.r_min:
-            raise ValueError("Grid r_max must be larger than r_min")
-        if self.h <= 0:
-            raise ValueError("Step size h must be positive")
-
-@dataclass(frozen = True)
-class SolverOpts:
-    """
-    Class containing the numerical stability parameters.
-
-    Properties
-    ----------
-    tol : numerical tolerance for zeros.
-    bisection_tol : numerical tolerance for bisection algorithm.
-    renorm_threshold : numerical threshold before renormalizing.
-    renorm_factor : renormalization factor.
-
-    """
-    tol: float = 1e-6
-    bisection_tol: float = 1e-6
-    match_buffer_steps: int = 10
-    renorm_threshold: float = 1e6
-    renorm_factor: float = 1e-6
-
-@dataclass(frozen = True)
-class Eigenstate:
-    """
-    Class containing all the relevant features of an Eigenstate
-
-    Properties
-    ----------
-    E : energy of the eigenstate.
-    l : angular momentum of the eigenstate.
-    coord : coordinate of the eigenstate's wavefunction.
-    psi : eigenstate's wavefunction
-
-    """
-    E: float
-    l: int
-    coord: np.ndarray
-    psi: np.ndarray
+from physipy.numerics_data import *
 
 def _numerov_step(psi_prev, psi_curr, k_prev, k_curr, k_next, h):
     """
@@ -107,6 +34,7 @@ def _numerov_step(psi_prev, psi_curr, k_prev, k_curr, k_next, h):
 
     return step
 
+'''
 def _integrate_numerov_vectorized(E, l, potential, psi_0, psi_1, grid = Grid(), solver = SolverOpts(), outward = True, store_wavefunction = False, n_points = 2, **kwargs):
     """
     Perform a Numerov integration of the radial Schrödinger equation.
@@ -207,7 +135,7 @@ def _integrate_numerov_vectorized(E, l, potential, psi_0, psi_1, grid = Grid(), 
         psi = psi[:, ::-1]
     
     return (coord, psi)
-
+'''
 
 def _integrate_numerov(E, l, potential, psi_0, psi_1, grid = Grid(), solver = SolverOpts(), outward = True, store_wavefunction = False, n_points = None, **kwargs):
     """
@@ -261,7 +189,7 @@ def _integrate_numerov(E, l, potential, psi_0, psi_1, grid = Grid(), solver = So
     if not outward:
         k2 = k2[::-1]
     
-    psi = numerics._integrate_numerov_cython(psi_0, psi_1, h, solver.renorm_threshold, solver.renorm_factor, psi, k2)
+    psi = numerics._integrate_numerov_cython(np.asarray(psi_0).item(), np.asarray(psi_1).item(), h, solver.renorm_threshold, solver.renorm_factor, psi, k2)
     
     if not store_wavefunction:
         coord = coord[-n_points:]

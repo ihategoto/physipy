@@ -1,11 +1,18 @@
 import numpy as np
 from physipy.utils import *
+from physipy.numerics_data import Grid
 
-__all__ = []
+__all__ = [
+    'WKB_seed'
+]
 
-def WKB_seed(E, l, r, h, potential, outward = False, scattering = False,  **kwargs):
+def WKB_seed(E, l, potential, grid = Grid(), outward = False, scattering = False, **kwargs):
     """
-    Compute the WKB approximated step.
+    Compute the WKB seed value for the first Numerov integration step.
+
+    Uses the WKB approximation to set the initial amplitude and phase at
+    the boundary of the integration domain, improving numerical stability
+    compared to a naive constant seed.
 
     Parameters
     ----------
@@ -13,26 +20,26 @@ def WKB_seed(E, l, r, h, potential, outward = False, scattering = False,  **kwar
         Particle's energy.
     l : int
         Angular momentum quantum number.
-    r : float or ndarray
-        Last point of the mesh.
-    h : float
-        Grid's step.
     potential : callable
-        Potential energy to be used in the calculation.
+        Potential energy function V(r).
+    grid : Grid
+        Mesh parameters; r_min is used for outward, r_max for inward (default Grid()).
     outward : bool
-        Boolean flag that indicates the direction of integration.
-        The logic here is the following : we always integrate along 
-        the direction of the decaying behaviour.
+        If True, seed is computed at r_min for outward integration.
+        If False, seed is computed at r_max for inward integration (default False).
+    scattering : bool
+        If True, returns a complex seed for scattering states.
+        If False, returns the real part for bound states (default False).
     kwargs : dict
-        Additional arguments of the potential energy.
+        Additional arguments forwarded to k_squared.
 
     Returns
     -------
-    wkb_seed : float or ndarray
-        WKB approximated starting point for the inward integration.
-
+    wkb_seed : float or complex
+        WKB-approximated value of ψ at the second grid point from the boundary.
     """
-    h = -h if not outward else h
+    h = grid.h if outward else -grid.h
+    r = grid.r_min if outward else grid.r_max
 
     k2_1 = k_squared(r, l, E, potential, **kwargs)
     k2_2 = k_squared(r + h, l, E, potential, **kwargs)

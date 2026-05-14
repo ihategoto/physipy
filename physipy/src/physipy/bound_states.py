@@ -1,7 +1,8 @@
 import numpy as np
 
 from physipy.utils import *
-from physipy.numerics import _integrate_numerov, Grid, SolverOpts, Eigenstate
+from physipy.numerics import _integrate_numerov
+from physipy.numerics_data import *
 from physipy.potentials import *
 from physipy.wkb import WKB_seed
 
@@ -201,8 +202,8 @@ def energy_levels(E, l, potential, psi_0_outward , grid = Grid(), solver = Solve
 
     for _l in l:
         for _E in E:
-            psi_1_outward = WKB_seed(_E, _l, r_min, h, potential, outward = True, **kwargs)
-            psi_1_inward = WKB_seed(_E, _l, r_max, h, potential, outward = False, **kwargs)
+            psi_1_outward = WKB_seed(_E, _l, potential, grid, outward = True, **kwargs)
+            psi_1_inward = WKB_seed(_E, _l, potential, grid, outward = False, **kwargs)
             __1, __2, error = _integrate_bound_state(_E, _l, potential, psi_0_outward, psi_1_outward, psi_0_inward, psi_1_inward, grid, solver, **kwargs)
             err_curr = error
             if err_prev is not None and E_prev is not None and np.sign(err_curr) != np.sign(err_prev):
