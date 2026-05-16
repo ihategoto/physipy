@@ -49,4 +49,8 @@ __all__ = [
     "integrate_scattering_state",
     "compute_phase_shift",
     "normalize_scattering_state",
+
+    # --- Mean field ---
+    "self_consistent_gp",
+    "gp_energy_functional",
 ]
