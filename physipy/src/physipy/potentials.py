@@ -1,4 +1,7 @@
 import numpy as np
+import math
+from scipy.special import eval_hermite
+
 from physipy.numerics_data import Grid
 import physipy.constants as constants
 
@@ -8,7 +11,8 @@ __all__ = [
     "lennard_jones",
     "effective_potential",
     "helper_grid_lj",
-    "wave_vector"
+    "wave_vector",
+    "ho_n_radial_wavefunction"
 ]
 
 def gross_pitaevskij(r, **kwargs):
@@ -24,7 +28,7 @@ def gross_pitaevskij(r, **kwargs):
         Position(s) at which the potential is evaluated.
     kwargs : dict
         Required and optional parameters:
-        - phi   : ndarray, radial wavefunction from the previous iteration (required).
+        - guess   : ndarray, radial wavefunction from the previous iteration (required).
         - g     : float, coupling constant Na (default 1).
         - r_min : float, left endpoint of the phi grid (default 0).
         - r_max : float, right endpoint of the phi grid (default 5).
@@ -38,18 +42,20 @@ def gross_pitaevskij(r, **kwargs):
     g = 1 if 'g' not in kwargs else kwargs['g']
     r_min = 0 if 'r_min' not in kwargs else kwargs['r_min']
     r_max = 5 if 'r_max' not in kwargs else kwargs['r_max']
+    m = 1 if 'm' not in kwargs else kwargs['m']
+    omega = 1 if 'omega' not in kwargs else kwargs['omega']
     h = 1e-1 if 'h' not in kwargs else kwargs['h']
 
-    if 'phi' not in kwargs:
+    if 'guess' not in kwargs:
         raise ValueError('No initial guess provided.')
     else:
-        phi = kwargs['phi']
+        phi = kwargs['guess']
     
     coord = np.arange(r_min, r_max + h , h)
     phi_r = np.interp(r, coord, phi)
-    r_squared = np.pow(r, 2) 
+    r_squared = np.pow(r, 2)
 
-    E = 1/2 * r_squared + g * np.pow(phi_r, 2) / r_squared
+    E = 1/2 * m * omega * omega * r_squared + g * np.pow(phi_r, 2) / r_squared
     return E
 
 def harmonic(r, **kwargs):
@@ -182,3 +188,55 @@ def wave_vector(E, **kwargs):
         k = np.sqrt(2 * m * E) / constants.hbar
     
     return k
+
+def _log_normalization_const_squared(nu, n):
+    """
+    Compute the log of the normalization constant squared of the n-th radial wavefunction of the 3D harmonic oscillator.
+
+    Parameters
+    ----------
+    nu : float 
+        nu parameter of the harmonic oscillator.
+    n : int
+        Radial number of the radial wavefunction.
+
+    Returns
+    -------
+    log_normalization_const_squared : float
+        Log of the normalization constant squared
+    """
+    log_normalization_const_squared = np.log(np.sqrt(2 * nu))
+    log_normalization_const_squared -= np.log(np.pow(np.pi, 1/2)) 
+    log_normalization_const_squared -= np.log(2) * (2 * n)
+    log_normalization_const_squared -= math.lgamma(2 * n + 2)
+
+    return log_normalization_const_squared
+
+def ho_n_radial_wavefunction(r, nu, n, reduced = False):
+    """
+    Returns the n-th radial wavefunction of the 3D harmonic oscillator.
+
+    Parameters
+    ----------
+    r : ndarray or float
+        Locations at which the radial wavefunction must be evaluated at.
+    nu : float
+        nu parameter of the harmonic oscillator.
+    n : int
+        Radial number of the radial wavefunction.
+
+    Returns
+    -------
+    n_wf : ndarray
+        Wavefunction evaluated at the required locations.
+    """
+    r = np.atleast_1d(r)
+    if n != 0:
+        n_wf = np.exp(_log_normalization_const_squared(nu, n) / 2) * np.exp(-nu * r * r) / r * eval_hermite(2 * n + 1, r)
+    else:
+        n_wf = np.exp(_log_normalization_const_squared(nu, n) / 2) * np.exp(-nu * r * r) * 2 # eval_hermite(1, r) = 2*r, the r cancels out
+    
+    if reduced:
+        n_wf = n_wf * r
+    
+    return n_wf
