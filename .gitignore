@@ -5,6 +5,7 @@ __pycache__/
 # Virtual environments
 .venv/
 env/
+physipy-env/
 
 # Packaging artifacts
 *.egg-info/
@@ -22,3 +23,6 @@ quantum_statistics.ipynb
 
 # MacOS related stuff
 .DS_Store
+
+# VSC related stuff
+.vscode/
