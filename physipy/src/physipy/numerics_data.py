@@ -93,10 +93,10 @@ class Eigenstate:
     psi: np.ndarray
 
 class ConvergenceError(RuntimeError):
-    def __init__(self, max_iter, delta_E):
+    def __init__(self, max_iter, last_diff):
         super().__init__(
             f"Self-consistent loop did not converge after {max_iter} iterations. "
-            f"Last energy difference: {delta_E:.2e}"
+            f"Last metric difference: {last_diff:.2e}"
         )
         self.max_iter = max_iter
-        self.delta_E = delta_E
+        self.delta_E = last_diff
