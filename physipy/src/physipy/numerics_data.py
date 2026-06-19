@@ -1,5 +1,8 @@
 from dataclasses import dataclass
+import math as mt
+
 import numpy as np
+from numpy.typing import NDArray
 
 __all__ = [
     "Grid",
@@ -15,6 +18,8 @@ class Grid:
 
     Attributes
     ----------
+    coord : ndarray
+        Grid points.
     r_min : float
         Starting point of the grid. Must be > 0 (r=0 excluded for numerical stability).
     r_max : float
@@ -25,6 +30,7 @@ class Grid:
     r_min: float = 1e-4
     r_max: float = 10
     h: float = 1e-3
+    coord: NDArray[np.float64] = None
 
     def __post_init__(self):
         if self.r_min <= 0:
@@ -33,6 +39,9 @@ class Grid:
             raise ValueError("Grid r_max must be larger than r_min")
         if self.h <= 0:
             raise ValueError("Step size h must be positive")
+        # initialize coord
+        n_steps = mt.ceil(abs(self.r_max - self.r_min) / abs(self.h))
+        object.__setattr__(self, 'coord', self.r_min + np.arange(n_steps) * abs(self.h))
         
 @dataclass(frozen = True)
 class NumericalOpts:
