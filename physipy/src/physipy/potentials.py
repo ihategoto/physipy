@@ -202,7 +202,7 @@ def _log_normalization_const_squared(nu, n):
     """
     log_normalization_const_squared = np.log(np.sqrt(2 * nu))
     log_normalization_const_squared -= np.log(np.pow(np.pi, 1/2)) 
-    log_normalization_const_squared -= np.log(2) * (2 * n)
+    log_normalization_const_squared -= np.log(2) * 2 * n
     log_normalization_const_squared -= math.lgamma(2 * n + 2)
 
     return log_normalization_const_squared
