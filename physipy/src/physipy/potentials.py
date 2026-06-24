@@ -30,9 +30,7 @@ def gross_pitaevskij(r, **kwargs):
         Required and optional parameters:
         - guess   : ndarray, radial wavefunction from the previous iteration (required).
         - g     : float, coupling constant Na (default 1).
-        - r_min : float, left endpoint of the phi grid (default 0).
-        - r_max : float, right endpoint of the phi grid (default 5).
-        - h     : float, step size used to reconstruct the phi grid (default 1e-1).
+        - grid_gp : ndarray, containing the grid points.
 
     Returns
     -------
@@ -40,19 +38,16 @@ def gross_pitaevskij(r, **kwargs):
         GP potential evaluated at each position in r.
     """
     g = 1 if 'g' not in kwargs else kwargs['g']
-    r_min = 0 if 'r_min' not in kwargs else kwargs['r_min']
-    r_max = 5 if 'r_max' not in kwargs else kwargs['r_max']
+    grid = Grid() if 'grid_gp' not in kwargs else kwargs['grid_gp']
     m = 1 if 'm' not in kwargs else kwargs['m']
     omega = 1 if 'omega' not in kwargs else kwargs['omega']
-    h = 1e-1 if 'h' not in kwargs else kwargs['h']
 
     if 'guess' not in kwargs:
         raise ValueError('No initial guess provided.')
     else:
         phi = kwargs['guess']
     
-    coord = np.arange(r_min, r_max + h , h)
-    phi_r = np.interp(r, coord, phi)
+    phi_r = np.interp(r, grid.coord, phi)
     r_squared = np.pow(r, 2)
 
     E = 1/2 * m * omega * omega * r_squared + g * np.pow(phi_r, 2) / r_squared
@@ -207,7 +202,7 @@ def _log_normalization_const_squared(nu, n):
     """
     log_normalization_const_squared = np.log(np.sqrt(2 * nu))
     log_normalization_const_squared -= np.log(np.pow(np.pi, 1/2)) 
-    log_normalization_const_squared -= np.log(2) * (2 * n)
+    log_normalization_const_squared -= np.log(2) * 2 * n
     log_normalization_const_squared -= math.lgamma(2 * n + 2)
 
     return log_normalization_const_squared

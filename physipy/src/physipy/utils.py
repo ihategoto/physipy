@@ -111,7 +111,7 @@ def k_squared(r, l, E, potential, numerical = NumericalOpts(), **kwargs):
 
     Returns
     -------
-    k_2 : float or ndarray
+    k_2 : ndarray
         k² evaluated at each position in r. Positive inside the classical region.
     """
     r = np.atleast_1d(r)

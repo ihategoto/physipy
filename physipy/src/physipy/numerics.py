@@ -178,12 +178,9 @@ def _integrate_numerov(E, l, potential, psi_0, psi_1, grid = Grid(), solver = So
     if not store_wavefunction and n_points is None:
         raise ValueError('Both store_wavefunction and n_points are None.')
 
-    r_min = grid.r_min
-    r_max = grid.r_max
     h = grid.h if outward else -1 * grid.h
-    n_steps = mt.ceil(abs(r_max - r_min) / abs(grid.h))
-    coord  = r_min + np.arange(n_steps) * abs(grid.h)
-    psi = np.zeros(n_steps)
+    coord  = grid.coord
+    psi = np.zeros(len(coord))
     k2 = k_squared(coord, l, E, potential, **kwargs)
 
     if not outward:
