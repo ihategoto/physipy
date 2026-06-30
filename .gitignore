@@ -26,3 +26,6 @@ quantum_statistics.ipynb
 
 # VSC related stuff
 .vscode/
+
+# Claude related stuff
+.claude/
